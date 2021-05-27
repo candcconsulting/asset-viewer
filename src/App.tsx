@@ -1,10 +1,15 @@
 import "./App.scss";
 
+import { FitViewTool, IModelApp, IModelConnection, ScreenViewport, StandardViewId, ViewCreator3d } from "@bentley/imodeljs-frontend"
+import { DisplayStyleSettingsProps } from "@bentley/imodeljs-common"
 import { Viewer } from "@bentley/itwin-viewer-react";
 import React, { useEffect, useState } from "react";
 
 import AuthorizationClient from "./AuthorizationClient";
 import { Header } from "./Header";
+import { HS2Decorator } from "./components/decorators/HS2Decorator";
+import { HS2UiItemsProvider } from "./providers/HS2UiItemsProvider";
+
 
 const App: React.FC = () => {
   const [isAuthorized, setIsAuthorized] = useState(
@@ -60,6 +65,26 @@ const App: React.FC = () => {
     await AuthorizationClient.signOut();
     setIsAuthorized(false);
   };
+  const onIModelConnected = async (_imodel: IModelConnection) => {
+    const viewCreator = new ViewCreator3d(_imodel);
+    const viewState = await viewCreator.createDefaultView();
+
+    // Example of custom logic... set to a top view.
+    viewState.setStandardRotation (StandardViewId.Top);
+    IModelApp.viewManager.onViewOpen.addOnce(async (vp: ScreenViewport) => {  
+      IModelApp.tools.run(FitViewTool.toolId, vp);
+      const viewStyle: DisplayStyleSettingsProps = {
+        viewflags: {
+          visEdges: false,
+          shadows: true,
+          ambientOcclusion: true          
+        }
+      }
+      vp.overrideDisplayStyle(viewStyle);
+      IModelApp.viewManager.addDecorator(new HS2Decorator(vp));
+    
+    });
+  }
 
   return (
     <div className="viewer-container">
@@ -74,8 +99,10 @@ const App: React.FC = () => {
         isAuthorized && (
           <Viewer
             contextId={process.env.IMJS_CONTEXT_ID ?? ""}
-            iModelId={process.env.IMJS_IMODEL_ID ?? ""}
+            iModelId={"7ec5373d-7659-4fea-b2fb-e3cf144f7963"}
             authConfig={{ oidcClient: AuthorizationClient.oidcClient }}
+            onIModelConnected = {onIModelConnected}
+            uiProviders = {[new HS2UiItemsProvider()]}
           />
         )
       )}
