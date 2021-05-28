@@ -14,7 +14,7 @@ export function HS2ListWidgetComponent() {
         tableList.push(
           <tr onClick={() => { 
             IModelApp.viewManager.selectedView!.zoomToElements(value.entities, { animateFrustumChange: true, standardViewId: StandardViewId.RightIso});
-            emph.emphasizeElements(value.entities, IModelApp.viewManager.selectedView!, undefined, true)
+            emph.emphasizeElements(value.entities, IModelApp.viewManager.selectedView!, undefined, true)            
               }
           }>
             <th>{value.assetId}</th>
